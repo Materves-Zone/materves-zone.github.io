@@ -34,13 +34,18 @@
 
             // camera
             let sphereCamera;
-            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-            camera.position.set(100, 200, 300 );
+            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 5000 );
+            camera.position.set(0, 0, 1000 );
 
             // scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color( 0xFFFFFF );
-            scene.fog = new THREE.Fog( 0xa0a0a0, 200, 2000 );
+            scene.fog = new THREE.Fog( 0xa0a0a0, 200, 5000 );
+
+            // set hemisphere light
+            const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+            hemiLight.position.set( 0, 200, 0 );
+            scene.add( hemiLight );
 
             // renderer setting
             renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -70,27 +75,27 @@
 
             // create mesh
             const loader = new FBXLoader();
-				loader.load( 'examples/models/fbx/Monkey.fbx', function ( object ) {
+			loader.load( 'examples/models/fbx/Monkey.fbx', function ( object ) {
 
-					//mixer = new THREE.AnimationMixer( object );
+				//mixer = new THREE.AnimationMixer( object );
 
-					//const action = mixer.clipAction( object.animations[ 0 ] );
-					//action.play();
+				//const action = mixer.clipAction( object.animations[ 0 ] );
+				//action.play();
 
-					object.traverse( function ( child ) {
+				object.traverse( function ( child ) {
 
-						if ( child.isMesh ) {
+					if ( child.isMesh ) {
 
-							child.castShadow = true;
-							child.receiveShadow = true;
+						child.castShadow = true;
+						child.receiveShadow = true;
 
-						}
-
-					} );
-
-					scene.add( object );
+					}
 
 				} );
+
+				scene.add( object );
+
+			} );
         }
 
         function animate() 
