@@ -25,7 +25,11 @@
         const clock = new THREE.Clock();
         let mixer;
 
+        
+        // runing at the start
         init();
+
+        // runing every frame
         animate();
 
 
@@ -117,6 +121,23 @@
                     metalness : 0
                 }
             );
+
+            // create sound listener
+            const listener = new THREE.AudioListener();
+            camera.add( listener );
+
+            // create sound clip
+            const sound = new THREE.Audio( listener );
+
+            // lodaing sound
+            const audioLoader = new THREE.AudioLoader();
+            audioLoader.load('./examples/sounds/FlyMeToTheMoon.mp3', function(buffer)
+            {
+                sound.setBuffer( buffer );
+                sound.setLoop( true );
+                sound.setVolume( 0.5 );
+                sound.play();
+            });
         }
 
         function animate() 
