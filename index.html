@@ -22,6 +22,8 @@
         import Stats from './examples/jsm/libs/stats.module.js';
         
         let camera, scene, renderer, stats;
+        const clock = new THREE.Clock();
+        let mixer;
 
         init();
         animate();
@@ -75,17 +77,18 @@
 
             // create mesh
             const loader = new FBXLoader();
-			loader.load( 'examples/models/fbx/Monkey.fbx', function ( object ) {
+			loader.load( 'examples/models/fbx/Moonts.fbx', function ( object ) {
 
-				//mixer = new THREE.AnimationMixer( object );
-
-				//const action = mixer.clipAction( object.animations[ 0 ] );
-				//action.play();
+				mixer = new THREE.AnimationMixer( object );
+				const action = mixer.clipAction( object.animations[ 1 ] );
+                action.timeScale = 1/5;
+				action.play();
 
 				object.traverse( function ( child ) {
 
 					if ( child.isMesh ) {
 
+                        child.material = PBRMat;
 						child.castShadow = true;
 						child.receiveShadow = true;
 
@@ -96,11 +99,29 @@
 				scene.add( object );
 
 			} );
+
+            // loading texture
+            var Tex_AO = new THREE.TextureLoader().load('./examples/textures/Moon/M_AO.jpg');
+            var Tex_Color = new THREE.TextureLoader().load('./examples/textures/Moon/M_Color.jpg');
+            var Tex_Normal = new THREE.TextureLoader().load('./examples/textures/Moon/M_Normal.jpg');
+
+            // create a new material ball
+            const PBRMat = new THREE.MeshPhysicalMaterial(
+                {
+                    oaMap: Tex_AO,
+                    map: Tex_Color,
+                    normalMap: Tex_Normal,
+                    roughness: 1,
+                    metalness : 0
+                }
+            );
         }
 
         function animate() 
         {
             requestAnimationFrame( animate );
+            const delta = clock.getDelta();
+            if ( mixer ) mixer.update( delta );
             renderer.render( scene, camera );
         }
 
