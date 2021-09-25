@@ -15,33 +15,89 @@
 <body>
     <script type="module">
 
-			// threejs module (core function)
-			import * as THREE from './build/three.module.js';
+		// import
+		import * as THREE from './build/three.module.js';
+        import { FBXLoader } from './examples/jsm/loaders/FBXLoader.js';
+        import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
+        import Stats from './examples/jsm/libs/stats.module.js';
+        
+        let camera, scene, renderer, stats;
 
-            const scene = new THREE.Scene();
-			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        init();
+        animate();
 
-			const renderer = new THREE.WebGLRenderer();
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer.domElement );
 
-			const geometry = new THREE.BoxGeometry();
-			const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			const cube = new THREE.Mesh( geometry, material );
-			scene.add( cube );
+        function init()
+        {
+            const container = document.createElement( 'div' );
+            document.body.appendChild( container );
 
-			camera.position.z = 5;
+            // camera
+            let sphereCamera;
+            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+            camera.position.set(100, 200, 300 );
 
-			const animate = function () {
-				requestAnimationFrame( animate );
+            // scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0x000000 );
+            scene.fog = new THREE.Fog( 0xa0a0a0, 200, 2000 );
 
-				cube.rotation.x += 0.01;
-				cube.rotation.y += 0.01;
+            // renderer setting
+            renderer = new THREE.WebGLRenderer( { antialias: true } );
+            renderer.setPixelRatio( window.devicePixelRatio );
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.shadowMap.enabled = true;
+            container.appendChild( renderer.domElement );
 
-				renderer.render( scene, camera );
-			};
+            // control view
+            const controls = new OrbitControls( camera, renderer.domElement );
+            controls.target.set( 0, 100, 0 );
+            controls.update();
+            
+            // create ground
+            const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+            mesh.rotation.x = - Math.PI / 2;
+            mesh.receiveShadow = true;
+            mesh.material.opacity = 0.2;
+            mesh.material.transparent = true;
+            scene.add( mesh );
 
-			animate();
+            // create grid
+            const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
+            grid.material.opacity = 1;
+            grid.material.transparent = true;
+            scene.add( grid );
+
+            // create mesh
+            const loader = new FBXLoader();
+				loader.load( 'examples/models/fbx/Monkey.fbx', function ( object ) {
+
+					//mixer = new THREE.AnimationMixer( object );
+
+					//const action = mixer.clipAction( object.animations[ 0 ] );
+					//action.play();
+
+					object.traverse( function ( child ) {
+
+						if ( child.isMesh ) {
+
+							child.castShadow = true;
+							child.receiveShadow = true;
+
+						}
+
+					} );
+
+					scene.add( object );
+
+				} );
+        }
+
+        function animate() 
+        {
+            requestAnimationFrame( animate );
+            renderer.render( scene, camera );
+        }
 
     </script>
 </body>
