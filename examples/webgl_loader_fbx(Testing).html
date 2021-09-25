@@ -180,12 +180,15 @@
 
 			}
 
+			// web resolution self-adapt
 			function onWindowResize() {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
+				const canvas = renderer.domElement;
+				//camera.aspect = window.innerWidth / window.innerHeight;
+				camera.aspect = canvas.clientWidth / canvas.clientHeight;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				//renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
 
