@@ -8,6 +8,14 @@
     <!-- <meta http-equiv="refresh" content="0; url=examples/webgl_loader_fbx(Testing).html" /> -->
 
     <style>
+        
+        button
+        {
+            position: relative;
+            top: 860px;
+            padding: 30px 32px;
+            opacity: 0;
+        }
 
     </style>
 </head>
@@ -17,11 +25,10 @@
 
         <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - FBXLoader<br />
         Character and animation from <a href="https://www.mixamo.com/" target="_blank" rel="noopener">Mixamo</a>
+        <p></p>
+        <button id="btn">Click Me!</button>
 
     </div>
-
-    <!-- <button id="btn">Click Me!</button>
-    <button id="btn">Click Me!</button> -->
 
     <script type="module">
 
@@ -34,15 +41,17 @@
         let camera, scene, renderer, stats;
         const clock = new THREE.Clock();
         let mixer;
+        let OBJ;
+        var AnimID = 0;
+        var IsButtonPress = true;
 
-        const canvas = document.querySelector('#c');
 
         // button listener
-        // var btn = document.getElementById("btn");
-        // btn.addEventListener("click", function()
-        // {
-        //     PS_Fun();
-        // });
+        var btn = document.getElementById("btn");
+        btn.addEventListener("click", function()
+        {
+            PS_Fun();
+        });
 
         
         // runing at the start
@@ -54,6 +63,7 @@
 
         function init()
         {
+
             const container = document.createElement( 'div' );
             document.body.appendChild( container );
 
@@ -112,7 +122,7 @@
 			loader.load( 'examples/models/fbx/Moonts.fbx', function ( object ) {
 
 				mixer = new THREE.AnimationMixer( object );
-				const action = mixer.clipAction( object.animations[ 1 ] );
+				const action = mixer.clipAction( object.animations[ AnimID ] );
                 action.timeScale = 1/5;
 				action.play();
 
@@ -127,10 +137,11 @@
 					}
 
 				} );
-
-                object.position.set(0,200,0);
-                object.scale.set(0.7,0.7,0.7,);
-				scene.add( object );
+                
+                OBJ = object;
+                OBJ.position.set(0,200,0);
+                OBJ.scale.set(0.7,0.7,0.7,);
+				scene.add( OBJ );
 
 			} );
 
@@ -174,10 +185,24 @@
                 sound.setVolume( 0.5 );
         });
 
+        // button
         var PS_Fun = function ()
         {
-            console.log("~~~~");
-            sound.play();
+            if(IsButtonPress)
+            {
+                console.log("~~~~");
+                AnimID = 1;
+                sound.play();
+
+                mixer = new THREE.AnimationMixer( OBJ );
+                mixer.clipAction( OBJ.animations[ AnimID ] ).timeScale = 1/5;
+                mixer.clipAction( OBJ.animations[ AnimID ] ).play();
+
+                IsButtonPress = false;
+
+                btn.remove();
+            }
+            
         }
 
         //PS();
