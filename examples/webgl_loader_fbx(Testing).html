@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - FBX loader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - FBXLoader<br />
+			Character and animation from <a href="https://www.mixamo.com/" target="_blank" rel="noopener">Mixamo</a>
+		</div>
+
+		<script type="module">
+
+			// threejs module (core function)
+			import * as THREE from '../build/three.module.js';
+
+			// stats module
+			import Stats from './jsm/libs/stats.module.js';
+
+			// control module
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { FBXLoader } from './jsm/loaders/FBXLoader.js';
+
+			// hdr module
+			import { HDRCubeTextureLoader } from './jsm/loaders/HDRCubeTextureLoader.js';
+			import { RGBMLoader } from './jsm/loaders/RGBMLoader.js';
+			import { DebugEnvironment } from './jsm/environments/DebugEnvironment.js';
+
+			let camera, scene, renderer, stats;
+
+			const clock = new THREE.Clock();
+
+			let mixer;
+
+			init();
+			animate();
+
+			function init() {
+
+				const container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// camera settings
+				let sphereCamera;
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 100, 200, 300 );
+
+
+				// set scene
+				scene = new THREE.Scene();
+				//scene.background = new THREE.Color( 0xa0a0a0 );
+				scene.background = new THREE.Color( 0x000000 );
+				scene.fog = new THREE.Fog( 0xa0a0a0, 200, 2000 );
+
+				// set hemisphere light
+				const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+				hemiLight.position.set( 0, 200, 0 );
+				scene.add( hemiLight );
+
+				// set direct lighting
+				const dirLight = new THREE.DirectionalLight( 0xffffff );
+				dirLight.position.set( 0, 200, 100 );
+				dirLight.castShadow = true;
+				dirLight.shadow.camera.top = 180;
+				dirLight.shadow.camera.bottom = - 100;
+				dirLight.shadow.camera.left = - 120;
+				dirLight.shadow.camera.right = 120;
+				//scene.add( dirLight );
+				// visual light visible
+				//scene.add( new THREE.CameraHelper( dirLight.shadow.camera ) );
+
+				// ground
+				const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+				mesh.rotation.x = - Math.PI / 2;
+				mesh.receiveShadow = true;
+				//scene.add( mesh );
+
+				// grid
+				const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
+				grid.material.opacity = 0.2;
+				grid.material.transparent = true;
+				//scene.add( grid );
+
+				// hdr
+				let ldrCubeMap, hdrCubeMap, rgbmCubeMap;
+				const rgbmUrls = [ 'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png' ];
+				rgbmCubeMap = new RGBMLoader()
+					.setPath('./textures/cube/pisaRGBM16/')
+					.loadCubemap( rgbmUrls, function () {
+
+						rgbmCubeMap.encoding = THREE.RGBM16Encoding;
+						//rgbmCubeRenderTarget = pmremGenerator.fromCubemap(rgbmCubeMap);
+
+					} );
+					//scene.background= rgbmCubeMap;
+
+					//sphereCamera = new THREE.CubeCamera(1,1000,500);
+
+				// texture
+				// var Tex_Map = new THREE.TextureLoader().load('textures/GDC/mesh_UpperBody_AlbedoTransparency.png');
+				// var Tex_Normal = new THREE.TextureLoader().load('textures/GDC/mesh_UpperBody_Normal.png');
+				// var Tex_OA = new THREE.TextureLoader().load('textures/GDC/mesh_UpperBody_AO.png');
+				// var Tex_Metal = new THREE.TextureLoader().load('textures/GDC/mesh_UpperBody_MetallicSmoothness.png');
+
+				var Tex_Map = new THREE.TextureLoader().load('textures/Moon/moon_8k_color_brim16.jpg');
+				var Tex_Normal = new THREE.TextureLoader().load('textures/Moon/moon_8k_color_brim16_AO_Normal.jpg');
+				var Tex_OA = new THREE.TextureLoader().load('textures/Moon/moon_8k_color_brim16_AO.jpg');
+				//var Tex_Metal = new THREE.TextureLoader().load('textures/GDC/mesh_UpperBody_MetallicSmoothness.png');
+
+				// materials
+				const PBRMat = new THREE.MeshPhysicalMaterial(
+					{
+						//color: 0xFFFFF00
+						roughness: 1,
+						map: Tex_Map,
+						normalMap: Tex_Normal,
+						oaMap: Tex_OA,
+						metalness : 0,
+						//metalnessMap : Tex_Metal,
+						//envMap: rgbmCubeMap
+					}
+				);
+
+				// model
+				const loader = new FBXLoader();
+				//loader.load( 'models/fbx/GDC1.fbx', function ( object ) {
+				loader.load( 'models/fbx/Moonts.fbx', function ( object ) {
+
+					mixer = new THREE.AnimationMixer( object );
+
+					const action = mixer.clipAction( object.animations[ 0 ] );
+					action.timeScale = 1/5;
+					action.play();
+
+					object.traverse( function ( child ) {
+
+						if ( child.isMesh ) {
+
+							child.material = PBRMat;
+							child.castShadow = true;
+							child.receiveShadow = true;
+
+						}
+
+					} );
+
+					object.scale.set(0.55,0.55,0.55);
+					object.position.set(0,90,0);
+					scene.add( object );
+
+				} );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				container.appendChild( renderer.domElement );
+
+				const controls = new OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 100, 0 );
+				controls.update();
+
+				window.addEventListener( 'resize', onWindowResize );
+
+				// stats
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				const delta = clock.getDelta();
+
+				if ( mixer ) mixer.update( delta );
+
+				renderer.render( scene, camera );
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>
